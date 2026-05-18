@@ -252,7 +252,7 @@ if 'chat_messages' not in st.session_state:
 if st.session_state.right_sidebar_open:
     col1, col2 = st.columns([2, 2], gap="large")
 else:
-    col1, col2 = st.columns([3, 1], gap="large")
+    col1, col2 = st.columns([1, 0.01])
 
 # Loading layout
 with st.spinner('로딩 중...'):

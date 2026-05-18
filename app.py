@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from rightside import render_right_sidebar
 from chat import render_chat_interface
+import streamlit.components.v1 as components
 
 # Page configuration
 st.set_page_config(

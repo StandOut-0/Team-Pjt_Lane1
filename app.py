@@ -5,7 +5,8 @@ import pandas as pd
 from rightside import render_right_sidebar
 from chat import render_chat_interface
 from db import init_table
-
+import plotly.express as px
+from table import load_dashboard_data
 
 # Page configuration
 st.set_page_config(
@@ -16,6 +17,7 @@ st.set_page_config(
 )
 init_table()
 
+load_dashboard_data()
 
 # Custom CSS for styling
 st.markdown("""
@@ -333,6 +335,85 @@ with col1:
 with col2:
     render_right_sidebar()
 
+
+try:
+    df = load_dashboard_data()
+except Exception as e:
+    st.error(f"데이터베이스 연결 및 로드 실패: {e}")
+    st.stop()
+
+st.title("서울시 전기차 등록 현황 및 차량 유형 분석")
+st.markdown("---")
+
+# 화면을 왼쪽(막대그래프)과 오른쪽(원형차트) 2개 구역으로 나눕니다.
+col1, col2 = st.columns([6, 4])
+
+# --- 왼쪽 구역: 1. 전기차 등록 현황 막대그래프 ---
+with col1:
+    st.subheader("서울시 전기차 등록 현황 (2020.10 ~ 2025.10)")
+    
+    # Plotly를 이용한 막대그래프 생성
+    fig_bar = px.bar(
+        df, 
+        x='date', 
+        y='ev_cnt',
+        labels={'date': '조회 시점(년월)', 'ev_cnt': '전기차 등록 대수(대)'},
+        color_discrete_sequence=['#2ecc71'] # 친환경 전기차 느낌의 초록색 정량화
+    )
+    
+    # 그래프 레이아웃 커스텀
+    fig_bar.update_layout(
+        xaxis_tickangle=-45, # 날짜 글자가 겹치지 않도록 사선 처리
+        margin=dict(l=20, r=20, t=20, b=20)
+    )
+    
+    # Streamlit 화면에 표시
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+
+# --- 오른쪽 구역: 2. 차량 유형 비율 원형 차트 ---
+with col2:
+    st.subheader("시점별 차량 유형 비율")
+    
+    # 사용자가 원하는 달의 비율을 볼 수 있도록 인터랙티브 셀렉트박스 배치
+    # 기본값(index)은 데이터의 가장 최신 달(마지막 행)로 지정합니다.
+    available_dates = df['date'].tolist()
+    selected_date = st.selectbox(
+        "비율을 확인할 년월을 선택하세요:", 
+        options=available_dates, 
+        index=len(available_dates) - 1
+    )
+    
+    # 사용자가 선택한 날짜의 데이터만 필터링 추출
+    target_row = df[df['date'] == selected_date].iloc[0]
+    
+    # 원형 차트용 데이터프레임 구조화 (전기차 값 vs 내연기관 값)
+    pie_data = pd.DataFrame({
+        "차량 유형": ["전기차 (EV)", "내연기관 (ICE)"],
+        "등록 대수": [target_row['ev_ev_cnt' if 'ev_ev_cnt' in target_row else 'ev_cnt'], target_row['ice_cnt']]
+    })
+    
+    # Plotly 원형 차트 생성
+    fig_pie = px.pie(
+        pie_data, 
+        names="차량 유형", 
+        values="등록 대수",
+        color="차량 유형",
+        color_discrete_map={"전기차 (EV)": "#2ecc71", "내연기관 (ICE)": "#34495e"}, # 대비되는 색상 지정
+        hole=0.3 # 세련된 도넛 차트 형태로 변형
+    )
+    
+    fig_pie.update_traces(textinfo='percent+label') # 차트 위에 퍼센트와 라벨 함께 표시
+    fig_pie.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+    
+    # Streamlit 화면에 표시
+    st.plotly_chart(fig_pie, use_container_width=True)
+    
+    # 하단에 미니 지표(Metric)로 실숫값도 표기하여 직관성 확보
+    st.markdown(f"**📍 {selected_date} 기준 실제 등록 데이터**")
+    m_col1, m_col2 = st.columns(2)
+    m_col1.metric("전기차 대수", f"{target_row['ev_cnt']:,} 대")
+    m_col2.metric("내연기관 대수", f"{int(target_row['ice_cnt']):,} 대")
 
 # Dark mode toggle button
 st.markdown(f"""

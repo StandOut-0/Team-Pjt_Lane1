@@ -28,7 +28,7 @@ def get_engine():
 
     # .env 파일에서 DB_NAME 값을 읽는다.
     # 값이 없으면 기본값으로 "mydb"를 사용한다.
-    db_name = os.getenv("DB_NAME", "studentdb")
+    db_name = os.getenv("DB_NAME", "mydb")
 
     # SQLAlchemy가 MySQL에 접속하기 위한 DB URL을 만든다.
     #

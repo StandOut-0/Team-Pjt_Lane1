@@ -257,7 +257,10 @@ if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
 # Main layout - responsive based on right sidebar state
-col1, col2 = st.columns([2, 2], gap="large")
+if st.session_state.right_sidebar_open:
+    col1, col2 = st.columns([2, 2], gap="large")
+else:
+    col1, col2 = st.columns([1, 0.01])
 
 # Main Content (Dashboard)
 with col1:

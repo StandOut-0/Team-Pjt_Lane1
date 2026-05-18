@@ -1,0 +1,4 @@
+Main / Primary: #5A9BD5
+Primary Hover: #4A89C2
+Secondary: #6C7A89
+Secondary Light: #AAB4BE

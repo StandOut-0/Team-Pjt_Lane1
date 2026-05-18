@@ -1,0 +1,17 @@
+자주하는 질문 - 현대자동차
+https://www.hyundai.com/kr/ko/e/customer/center/faq
+
+자동차 등록대수현황 시도별
+https://kosis.kr/statHtml/statHtml.do?sso=ok&returnurl=https%3A%2F%2Fkosis.kr%3A443%2FstatHtml%2FstatHtml.do%3FtblId%3DDT_MLTM_5498%26orgId%3D116%26
+
+전기차 등록현황
+https://chargeinfo.ksga.org/front/statistics/evCar
+
+무공해차 통합누리집
+https://ev.or.kr/nportal/monitor/evMap.do
+
+사업자마다 다른 전기차 충전 가격
+https://ev.or.kr/nportal/evcarInfo/initEvcarChargePrice.do
+
+전기자동차 faq
+https://www.pse.com/ko/pages/electric-cars/electric-vehicles-faq

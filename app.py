@@ -1,8 +1,8 @@
 import streamlit as st
 import streamlit.components.v1 as components
-from leftside import render_left_sidebar
+import plotly.graph_objects as go
+import pandas as pd
 from rightside import render_right_sidebar
-from map import render_map_area
 from chat import render_chat_interface
 
 # Page configuration
@@ -210,17 +210,46 @@ if 'chat_messages' not in st.session_state:
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
-# Main layout
-col1, col2, col3 = st.columns([1, 4, 1])
+# Main layout - responsive based on right sidebar state
+if st.session_state.right_sidebar_open:
+    col1, col2 = st.columns([2, 1])
+else:
+    col1, col2 = st.columns([1, 0.1])
 
-# Left Sidebar
-render_left_sidebar(col1)
+# Main Content (Dashboard)
+with col1:
+    st.markdown('<div class="logo-area">서울에 ~한 충전소, 일차로</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Dashboard graphs
+    st.markdown("**대시보드**")
+    
+    # Sample data for graphs
+    dates = pd.date_range(start='2024-01-01', periods=7, freq='D')
+    values = [120, 150, 180, 220, 200, 250, 280]
+    
+    # Line chart
+    fig1 = go.Figure()
+    fig1.add_trace(go.Scatter(x=dates, y=values, mode='lines+markers', name='충전량'))
+    fig1.update_layout(title='일별 충전량', height=200)
+    st.plotly_chart(fig1, width='stretch')
+    
+    # Bar chart
+    fig2 = go.Figure()
+    fig2.add_trace(go.Bar(x=['강남구', '서초구', '송파구', '마포구', '영등포구'], 
+                         y=[450, 380, 520, 290, 410], name='충전소 수'))
+    fig2.update_layout(title='지역별 충전소 수', height=200)
+    st.plotly_chart(fig2, width='stretch')
+    
+    # Pie chart
+    fig3 = go.Figure()
+    fig3.add_trace(go.Pie(labels=['전기차', '하이브리드', '기타'], 
+                         values=[65, 25, 10], hole=0.3))
+    fig3.update_layout(title='차량 유형 비율', height=200)
+    st.plotly_chart(fig3, width='stretch')
 
-# Main Content (Map Area)
-render_map_area(col2)
-
-# Right Sidebar
-render_right_sidebar(col3)
+# Right Sidebar (Map with search bar)
+render_right_sidebar(col2)
 
 # Dark mode toggle button
 st.markdown(f"""

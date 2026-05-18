@@ -70,12 +70,12 @@ st.markdown("""
     /* Logo area */
     .logo-area {
         text-align: center;
-        padding: 20px 0;
-        font-size: 24px;
+        padding: 12px 0;
+        font-size: 22px;
         font-weight: bold;
         color: #1e88e5;
         border-bottom: 2px solid #1e88e5;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
     }
     
     /* Dark mode toggle button */
@@ -202,6 +202,12 @@ if 'left_sidebar_open' not in st.session_state:
     st.session_state.left_sidebar_open = True
 if 'right_sidebar_open' not in st.session_state:
     st.session_state.right_sidebar_open = True
+if 'search_section_open' not in st.session_state:
+    st.session_state.search_section_open = True
+if 'search_query' not in st.session_state:
+    st.session_state.search_query = ''
+if 'search_results' not in st.session_state:
+    st.session_state.search_results = []
 if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 if 'chat_fullscreen' not in st.session_state:
@@ -223,31 +229,56 @@ with col1:
     st.markdown("---")
     
     # Dashboard graphs
-    st.markdown("**대시보드**")
     
     # Sample data for graphs
-    dates = pd.date_range(start='2024-01-01', periods=7, freq='D')
-    values = [120, 150, 180, 220, 200, 250, 280]
-    
-    # Line chart
+    months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월']
+    values_last_year = [110, 140, 170, 200, 190, 230, 260]
+    values_this_year = [120, 150, 180, 220, 200, 250, 280]
+
+    districts = [
+        '종로구', '중구', '용산구', '성동구', '광진구', '동대문구', '중랑구', '성북구',
+        '강북구', '도봉구', '노원구', '은평구', '서대문구', '마포구', '양천구', '강서구',
+        '구로구', '금천구', '영등포구', '동작구', '관악구', '서초구', '강남구', '송파구', '강동구'
+    ]
+    stations = [
+        12, 14, 18, 21, 19, 17, 13, 16,
+        11, 10, 22, 20, 18, 23, 24, 27,
+        15, 9, 26, 14, 13, 25, 30, 28, 17
+    ]
+    build_status_df = pd.DataFrame({
+        '자치구': districts,
+        '충전소 수': stations
+    })
+
+    col_left, col_right = st.columns([2, 1])
+    with col_left:
+        st.markdown('<div style="font-size:1.2rem; font-weight:700; margin-top:0.5rem; margin-bottom:0.4rem;">충전소 구축 현황(구 단위)</div>', unsafe_allow_html=True)
+        st.dataframe(build_status_df, height=220)
+
+    with col_right:
+        st.markdown('<div style="font-size:1.2rem; font-weight:700; margin-top:0.5rem; margin-bottom:0.4rem;">차량 유형 비율</div>', unsafe_allow_html=True)
+        fig3 = go.Figure()
+        fig3.add_trace(go.Pie(labels=['전기차', '내연기관', '하이브리드'], 
+                             values=[60, 30, 10], hole=0.3))
+        fig3.update_layout(title='차량 유형 비율', height=240, margin=dict(t=35, b=10))
+        st.plotly_chart(fig3, width='stretch')
+
+    # Combined bar chart for last year and this year
     fig1 = go.Figure()
-    fig1.add_trace(go.Scatter(x=dates, y=values, mode='lines+markers', name='충전량'))
-    fig1.update_layout(title='일별 충전량', height=200)
+    fig1.add_trace(go.Bar(x=months, y=values_last_year, name='전년도', marker_color='lightgray', orientation='v'))
+    fig1.add_trace(go.Bar(x=months, y=values_this_year, name='이번 년도', marker_color='royalblue', orientation='v'))
+    fig1.update_layout(
+        title='서울시 전기차 전년대비 금년 등록대수',
+        barmode='group',
+        height=280,
+        margin=dict(t=36, b=20, l=40, r=20),
+        yaxis_title='등\n록\n대\n수',
+        yaxis_title_standoff=20,
+        xaxis_title='월',
+        legend_title='연도'
+    )
     st.plotly_chart(fig1, width='stretch')
-    
-    # Bar chart
-    fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=['강남구', '서초구', '송파구', '마포구', '영등포구'], 
-                         y=[450, 380, 520, 290, 410], name='충전소 수'))
-    fig2.update_layout(title='지역별 충전소 수', height=200)
-    st.plotly_chart(fig2, width='stretch')
-    
-    # Pie chart
-    fig3 = go.Figure()
-    fig3.add_trace(go.Pie(labels=['전기차', '하이브리드', '기타'], 
-                         values=[65, 25, 10], hole=0.3))
-    fig3.update_layout(title='차량 유형 비율', height=200)
-    st.plotly_chart(fig3, width='stretch')
+    st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
 
 # Right Sidebar (Map with search bar)
 render_right_sidebar(col2)

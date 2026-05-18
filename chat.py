@@ -1,61 +1,98 @@
 import streamlit as st
+import json
+
+
+def load_faq():
+    try:
+        with open("faq_data.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return []
+
+
+def find_answer(question, faq_data):
+
+    lower_question = question.lower()
+
+    best_match = None
+    highest_score = 0
+
+    for faq in faq_data:
+
+        score = 0
+
+        title = faq["title"].lower()
+        answer = faq["answer"].lower()
+
+        keywords = lower_question.split()
+
+        for keyword in keywords:
+
+            if keyword in title:
+                score += 2
+
+            if keyword in answer:
+                score += 1
+
+        if lower_question in title:
+            score += 5
+
+        if score > highest_score:
+            highest_score = score
+            best_match = faq
+
+    if best_match:
+        return best_match["answer"]
+
+    return "죄송합니다. 답변을 찾지 못했습니다."
 
 
 def render_chat_interface():
-    """Render the floating chat interface with bot functionality"""
-    st.markdown("""
-<button class="chat-button" onclick="toggleChat()">💬</button>
-<div class="chat-container" id="chatContainer">
-    <div class="chat-header">
-        <span>챗봇</span>
-        <div>
-            <button onclick="toggleFullscreen()" style="background:none;border:none;color:white;cursor:pointer;margin-right:10px;">⛶</button>
-            <button onclick="toggleChat()" style="background:none;border:none;color:white;cursor:pointer;">✕</button>
-        </div>
-    </div>
-    <div class="chat-messages" id="chatMessages">
-        <div style="margin-bottom:10px;"><strong>챗봇:</strong> 안녕하세요! 무엇을 도와드릴까요?</div>
-    </div>
-    <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." style="width:100%;padding:8px;border:1px solid #dee2e6;border-radius:4px;" onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()" style="width:100%;margin-top:10px;padding:8px;background:#1e88e5;color:white;border:none;border-radius:4px;cursor:pointer;">전송</button>
-    </div>
-</div>
 
-<script>
-    function toggleChat() {
-        const container = document.getElementById('chatContainer');
-        container.classList.toggle('open');
-    }
-    
-    function toggleFullscreen() {
-        const container = document.getElementById('chatContainer');
-        container.classList.toggle('fullscreen');
-    }
-    
-    function sendMessage() {
-        const input = document.getElementById('chatInput');
-        const messages = document.getElementById('chatMessages');
-        const text = input.value.trim();
-        
-        if (text) {
-            messages.innerHTML += '<div style="margin-bottom:10px;text-align:right;"><strong>사용자:</strong> ' + text + '</div>';
-            input.value = '';
-            
-            // Simulate bot response
-            setTimeout(() => {
-                messages.innerHTML += '<div style="margin-bottom:10px;"><strong>챗봇:</strong> 메시지를 받았습니다: ' + text + '</div>';
-                messages.scrollTop = messages.scrollHeight;
-            }, 500);
-            
-            messages.scrollTop = messages.scrollHeight;
-        }
-    }
-    
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    }
-</script>
-""", unsafe_allow_html=True)
+    # st.markdown("## 💬 EV 챗봇")
+
+    faq_data = load_faq()
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {
+                "role": "assistant",
+                "content": "안녕하세요! 무엇을 도와드릴까요?"
+            }
+        ]
+
+    # 기존 메시지 출력
+    for message in st.session_state.messages:
+
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # 입력창
+    user_input = st.chat_input("질문 입력...")
+
+    if user_input:
+
+        # 사용자 메시지 저장
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": user_input
+            }
+        )
+
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        # 챗봇 응답 생성
+        response = find_answer(user_input, faq_data)
+
+        # 챗봇 메시지 저장
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": response
+            }
+        )
+
+        with st.chat_message("assistant"):
+            st.markdown(response)

@@ -261,6 +261,14 @@ if 'chat_messages' not in st.session_state:
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
+
+# 그래프를 그리기 위해 가장 먼저 DB에서 데이터를 로드합니다.
+try:
+    df = load_dashboard_data()
+except Exception as e:
+    st.error(f"데이터베이스 연결 및 로드 실패: {e}")
+    st.stop()
+
 # Main layout - responsive based on right sidebar state
 if st.session_state.right_sidebar_open:
     col1, col2 = st.columns([2, 2], gap="large")
@@ -270,6 +278,25 @@ else:
 
 # Main Content (Dashboard)
 with col1:
+    # *1번 테이블===============================================
+    st.subheader("서울시 전기차 등록 현황 (2020.10 ~ 2025.10)")
+    # Plotly를 이용한 막대그래프 생성
+    fig_bar = px.bar(
+        df, 
+        x='date', 
+        y='ev_cnt',
+        labels={'date': '조회 시점(년월)', 'ev_cnt': '전기차 등록 대수(대)'},
+        color_discrete_sequence=['#2ecc71'] # 친환경 전기차 느낌의 초록색 정량화
+    )
+    # 그래프 레이아웃 커스텀
+    fig_bar.update_layout(
+        xaxis_tickangle=-45, # 날짜 글자가 겹치지 않도록 사선 처리
+        margin=dict(l=20, r=20, t=20, b=20)
+    )
+    # Streamlit 화면에 표시
+    st.plotly_chart(fig_bar, use_container_width=True)
+    
+    # *2번 테이블(근준님)===============================================
     st.markdown('<div class="logo-area">서울에 ~한 충전소, 일차로</div>', unsafe_allow_html=True)
     st.markdown("---")
     
@@ -324,55 +351,9 @@ with col1:
     )
 
     st.plotly_chart(fig1, width='stretch')
-    
     # st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
 
-    # 챗봇 추가
-    # st.markdown("---")
-    render_chat_interface()
-
-# Right Sidebar
-with col2:
-    render_right_sidebar()
-
-
-try:
-    df = load_dashboard_data()
-except Exception as e:
-    st.error(f"데이터베이스 연결 및 로드 실패: {e}")
-    st.stop()
-
-st.title("서울시 전기차 등록 현황 및 차량 유형 분석")
-st.markdown("---")
-
-# 화면을 왼쪽(막대그래프)과 오른쪽(원형차트) 2개 구역으로 나눕니다.
-col1, col2 = st.columns([6, 4])
-
-# --- 왼쪽 구역: 1. 전기차 등록 현황 막대그래프 ---
-with col1:
-    st.subheader("서울시 전기차 등록 현황 (2020.10 ~ 2025.10)")
-    
-    # Plotly를 이용한 막대그래프 생성
-    fig_bar = px.bar(
-        df, 
-        x='date', 
-        y='ev_cnt',
-        labels={'date': '조회 시점(년월)', 'ev_cnt': '전기차 등록 대수(대)'},
-        color_discrete_sequence=['#2ecc71'] # 친환경 전기차 느낌의 초록색 정량화
-    )
-    
-    # 그래프 레이아웃 커스텀
-    fig_bar.update_layout(
-        xaxis_tickangle=-45, # 날짜 글자가 겹치지 않도록 사선 처리
-        margin=dict(l=20, r=20, t=20, b=20)
-    )
-    
-    # Streamlit 화면에 표시
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-
-# --- 오른쪽 구역: 2. 차량 유형 비율 원형 차트 ---
-with col2:
+    # *3번 테이블 ===============================================
     st.subheader("시점별 차량 유형 비율")
     
     # 사용자가 원하는 달의 비율을 볼 수 있도록 인터랙티브 셀렉트박스 배치
@@ -408,12 +389,16 @@ with col2:
     
     # Streamlit 화면에 표시
     st.plotly_chart(fig_pie, use_container_width=True)
-    
-    # 하단에 미니 지표(Metric)로 실숫값도 표기하여 직관성 확보
-    st.markdown(f"**📍 {selected_date} 기준 실제 등록 데이터**")
-    m_col1, m_col2 = st.columns(2)
-    m_col1.metric("전기차 대수", f"{target_row['ev_cnt']:,} 대")
-    m_col2.metric("내연기관 대수", f"{int(target_row['ice_cnt']):,} 대")
+
+
+    # *4. 챗봇 추가
+    # st.markdown("---")
+    render_chat_interface()
+
+# Right Sidebar
+with col2:
+    render_right_sidebar()
+
 
 # Dark mode toggle button
 st.markdown(f"""

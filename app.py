@@ -197,6 +197,45 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+
+/* 상단 헤더 제거 */
+header {
+    visibility: hidden;
+}
+
+/* footer 제거 */
+footer {
+    visibility: hidden;
+}
+
+/* Deploy 버튼/상단 메뉴 제거 */
+#MainMenu {
+    visibility: hidden;
+}
+
+/* 위쪽 padding 제거 */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+}
+
+/* 전체 높이 최적화 */
+.main .block-container {
+    max-width: 100%;
+    padding-top: 0.5rem;
+}
+
+/* 불필요한 여백 제거 */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.5rem;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 # Initialize session state for UI controls
 if 'left_sidebar_open' not in st.session_state:
     st.session_state.left_sidebar_open = True
@@ -218,10 +257,7 @@ if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
 
 # Main layout - responsive based on right sidebar state
-if st.session_state.right_sidebar_open:
-    col1, col2 = st.columns([2, 1])
-else:
-    col1, col2 = st.columns([1, 0.1])
+col1, col2 = st.columns([2, 2], gap="large")
 
 # Main Content (Dashboard)
 with col1:
@@ -270,18 +306,26 @@ with col1:
     fig1.update_layout(
         title='서울시 전기차 전년대비 금년 등록대수',
         barmode='group',
-        height=280,
+        height=150,
         margin=dict(t=36, b=20, l=40, r=20),
         yaxis_title='등\n록\n대\n수',
         yaxis_title_standoff=20,
         xaxis_title='월',
         legend_title='연도'
     )
-    st.plotly_chart(fig1, width='stretch')
-    st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
 
-# Right Sidebar (Map with search bar)
-render_right_sidebar(col2)
+    st.plotly_chart(fig1, width='stretch')
+    
+    # st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
+
+    # 챗봇 추가
+    # st.markdown("---")
+    render_chat_interface()
+
+# Right Sidebar
+with col2:
+    render_right_sidebar()
+
 
 # Dark mode toggle button
 st.markdown(f"""
@@ -295,7 +339,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Chat Interface (Floating)
-render_chat_interface()
+# render_chat_interface()
 
 # Footer
 st.markdown("---")

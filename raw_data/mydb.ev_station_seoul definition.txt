@@ -1,0 +1,20 @@
+-- mydb.ev_station_seoul definition
+
+CREATE TABLE `ev_station_seoul` (
+  `stat_id` varchar(20) COLLATE utf8mb4_bin NOT NULL COMMENT '충전소ID',
+  `stat_nm` varchar(100) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '충전소명',
+  `addr` varchar(200) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '주소',
+  `addr_detail` varchar(200) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '주소상세',
+  `lat` decimal(15,7) DEFAULT NULL COMMENT '위도',
+  `lng` decimal(15,7) DEFAULT NULL COMMENT '경도',
+  `use_time` varchar(50) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '이용가능시간',
+  `busi_nm` varchar(100) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '운영기관명',
+  `busi_call` varchar(30) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '연락처',
+  `zscode` varchar(5) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '시군구코드',
+  `kind_detail` varchar(4) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '시설상세코드',
+  `parking_free` char(1) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '주차무료(Y/N)',
+  `limit_yn` char(1) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '이용제한(Y/N)',
+  `charger_cnt` int DEFAULT '0' COMMENT '보유 충전기 수',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stat_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='서울시 전기차 충전소 (충전소 단위)';

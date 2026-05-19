@@ -9,6 +9,7 @@ import plotly.express as px
 from table import load_dashboard_data
 import streamlit.components.v1 as components
 import base64
+from car_service import CarService
 
 # Page configuration
 st.set_page_config(
@@ -253,8 +254,10 @@ if 'chat_fullscreen' not in st.session_state:
     st.session_state.chat_fullscreen = False
 if 'chat_messages' not in st.session_state:
     st.session_state.chat_messages = []
+if "car_service" not in st.session_state:
+    st.session_state.car_service = CarService()
 
-
+car_service = st.session_state.car_service
 # 그래프를 그리기 위해 가장 먼저 DB에서 데이터를 로드합니다.
 try:
     df = load_dashboard_data()
@@ -271,25 +274,7 @@ else:
 
 # Main Content (Dashboard)
 with col1:
-    # *1번 테이블===============================================
-    st.subheader("서울시 전기차 등록 현황 (2020.10 ~ 2025.10)")
-    # Plotly를 이용한 막대그래프 생성
-    fig_bar = px.bar(
-        df, 
-        x='date', 
-        y='ev_cnt',
-        labels={'date': '조회 시점(년월)', 'ev_cnt': '전기차 등록 대수(대)'},
-        color_discrete_sequence=['#2ecc71'] # 친환경 전기차 느낌의 초록색 정량화
-    )
-    # 그래프 레이아웃 커스텀
-    fig_bar.update_layout(
-        xaxis_tickangle=-45, # 날짜 글자가 겹치지 않도록 사선 처리
-        margin=dict(l=20, r=20, t=20, b=20)
-    )
-    # Streamlit 화면에 표시
-    st.plotly_chart(fig_bar, use_container_width=True, key="ev_bar_chart")
     
-    # *2번 테이블(근준님)===============================================
     st.markdown('<div class="logo-area">서울에 ~한 충전소, 일차로</div>', unsafe_allow_html=True)
     st.markdown("---")
 # Loading layout
@@ -304,7 +289,7 @@ with st.spinner('로딩 중...'):
         # Dashboard graphs
         
         # Sample data for graphs
-        months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월']
+        months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월']
         values_last_year = [110, 140, 170, 200, 190, 230, 260]
         values_this_year = [120, 150, 180, 220, 200, 250, 280]
 
@@ -326,22 +311,25 @@ with st.spinner('로딩 중...'):
         col_left, col_right = st.columns([2, 1])
         with col_left:
             st.markdown('<div style="font-size:1.2rem; font-weight:700; margin-top:0.5rem; margin-bottom:0.4rem;">충전소 구축 현황(구 단위)</div>', unsafe_allow_html=True)
-            st.dataframe(build_status_df, height=220)
+            station_list = car_service.selectConstituencyGroupList()
+            st.dataframe(station_list, height=220)
 
         with col_right:
             st.markdown('<div style="font-size:1.2rem; font-weight:700; margin-top:0.5rem; margin-bottom:0.4rem;">차량 유형 비율</div>', unsafe_allow_html=True)
             fig3 = go.Figure()
-            fig3.add_trace(go.Pie(labels=['전기차', '내연기관', '하이브리드'], 
-                                values=[60, 30, 10], hole=0.3))
+            car_list = car_service.selectCarCategoryList()
+            fig3.add_trace(go.Pie(labels=['내연기관', '전기차'],
+                                values=[car_list[0]['gasCarPct'], car_list[0]['elecCarPct']], hole=0.3))
             
             fig3.update_layout(title='차량 유형 비율', height=240, margin=dict(t=35, b=10))
             
             st.plotly_chart(fig3, width='stretch', key="vehicle_type_pie")
 
         # Combined bar chart for last year and this year
+        carDict = car_service.selectCarYOYList()
         fig1 = go.Figure()
-        fig1.add_trace(go.Bar(x=months, y=values_last_year, name='전년도', marker_color='lightgray', orientation='v'))
-        fig1.add_trace(go.Bar(x=months, y=values_this_year, name='이번 년도', marker_color='royalblue', orientation='v'))
+        fig1.add_trace(go.Bar(x=months, y=carDict['table2'], name='전년도', marker_color='lightgray', orientation='v'))
+        fig1.add_trace(go.Bar(x=months, y=carDict['table1'], name='이번 년도', marker_color='royalblue', orientation='v'))
         
         fig1.update_layout(
             title='서울시 전기차 전년대비 금년 등록대수',
@@ -358,42 +346,6 @@ with st.spinner('로딩 중...'):
         # st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
 
         # *3번 테이블 ===============================================
-        st.subheader("시점별 차량 유형 비율")
-        
-        # 사용자가 원하는 달의 비율을 볼 수 있도록 인터랙티브 셀렉트박스 배치
-        # 기본값(index)은 데이터의 가장 최신 달(마지막 행)로 지정합니다.
-        available_dates = df['date'].tolist()
-        selected_date = st.selectbox(
-            "비율을 확인할 년월을 선택하세요:", 
-            options=available_dates, 
-            index=len(available_dates) - 1
-        )
-        
-        # 사용자가 선택한 날짜의 데이터만 필터링 추출
-        target_row = df[df['date'] == selected_date].iloc[0]
-        
-        # 원형 차트용 데이터프레임 구조화 (전기차 값 vs 내연기관 값)
-        pie_data = pd.DataFrame({
-            "차량 유형": ["전기차 (EV)", "내연기관 (ICE)"],
-            "등록 대수": [target_row['ev_ev_cnt' if 'ev_ev_cnt' in target_row else 'ev_cnt'], target_row['ice_cnt']]
-        })
-        
-        # Plotly 원형 차트 생성
-        fig_pie = px.pie(
-            pie_data, 
-            names="차량 유형", 
-            values="등록 대수",
-            color="차량 유형",
-            color_discrete_map={"전기차 (EV)": "#2ecc71", "내연기관 (ICE)": "#34495e"}, # 대비되는 색상 지정
-            hole=0.3 # 세련된 도넛 차트 형태로 변형
-        )
-        
-        fig_pie.update_traces(textinfo='percent+label') # 차트 위에 퍼센트와 라벨 함께 표시
-        fig_pie.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-        
-        # Streamlit 화면에 표시
-        st.plotly_chart(fig_pie, use_container_width=True, key="time_series_pie")
-        
         # st.markdown("<div style='height:80px'></div>", unsafe_allow_html=True)
 
         # *4. 챗봇 추가
